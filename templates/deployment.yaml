@@ -36,38 +36,48 @@ spec:
           #   httpGet:
           #     path: /
           #     port: http
+          # volumeMounts:
+          # - name: index
+          #   mountPath: '/usr/share/nginx/html'
+          # - name: test
+          #   mountPath: '/tmp'
           volumeMounts:
-          - name: index
-            mountPath: '/usr/share/nginx/html'
-          - name: test
-            mountPath: '/tmp'
+            {{- if .Values.configMap.aviliable }}
+              {{- range $name, $value := .Values.configMap }}
+                {{- if eq $value.as "volume" }}
+                - name: {{ $name }}-volume
+                  mountPath: {{ quote $value.mountPath }}
+                {{- end }}
+              {{- end }}
+            {{- end}}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      volumes:
-        - name: index
-          configMap: 
-            name: {{.Values.configMap.name}}
-            items: 
-            - key: "index.html"
-              path: "index.html"
+      {{- if .Values.configMap.aviliable }}
+        {{- range $name, $value := .Values.configMap }}
+          {{- if eq $value.as "volume" }}
+          - name: {{ $name }}-volume
+            mountPath: {{ quote $value.mountPath }}
+            configMap:
+              name: {{ $name }}
+              # items:
+              # {{- range $key := .Values.configMap.data}}
+              # - key: {{ $key }} 
+              #   path: {{ $key }}
+              # {{- end}}
+          {{- end }}
+        {{- end }}
+      {{- end}}
+      # volumes:
+      #   - name: index
+      #     configMap: 
+      #       name: {{ .Values.configMap.name }}
+      #       items: 
+      #       - key: "index.html"
+      #         path: "index.html"
 
-        - name: test
-          configMap: 
-            name: {{.Values.configMap.name}}
-            items: 
-            - key: "test.html"
-              path: "test.html"
-          
-          
-      # {{- with .Values.nodeSelector }}
-      # nodeSelector:
-      #   {{- toYaml . | nindent 8 }}
-      # {{- end }}
-      # {{- with .Values.affinity }}
-      # affinity:
-      #   {{- toYaml . | nindent 8 }}
-      # {{- end }}
-      # {{- with .Values.tolerations }}
-      # tolerations:
-      #   {{- toYaml . | nindent 8 }}
-      # {{- end }}
+      #   - name: test
+      #     configMap: 
+      #       name: {{ .Values.configMap.name }}
+      #       items: 
+      #       - key: "test.html"
+      #         path: "test.html"
