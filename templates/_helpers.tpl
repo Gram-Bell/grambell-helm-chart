@@ -47,4 +47,5 @@ Selector labels
 */}}
 {{- define "..selectorLabels" -}}
 app.kubernetes.io/name: {{ include "..name" . }}
+logging: enabled
 {{- end }}
