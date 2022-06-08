@@ -1,0 +1,153 @@
+---
+# Source: grambell/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-connector-backend
+  labels:
+    helm.sh/chart: grambell-0.1.2-beta
+    app.kubernetes.io/name: connector-backend
+    logging: enabled
+    app.kubernetes.io/version: "0.1.2-beta"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 3010
+      protocol: TCP
+      name: web
+  selector:
+    app.kubernetes.io/name: connector-backend
+    logging: enabled
+---
+# Source: grambell/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-connector-backend
+  labels:
+    helm.sh/chart: grambell-0.1.2-beta
+    app.kubernetes.io/name: connector-backend
+    logging: enabled
+    app.kubernetes.io/version: "0.1.2-beta"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: connector-backend
+      logging: enabled
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: connector-backend
+        logging: enabled
+    spec:
+      containers:
+        - name: grambell
+          image: "connector-backend-repository:latest-tag"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3010
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+# Source: grambell/templates/hpa.yaml
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: release-name-connector-backend
+  labels:
+    helm.sh/chart: grambell-0.1.2-beta
+    app.kubernetes.io/name: connector-backend
+    logging: enabled
+    app.kubernetes.io/version: "0.1.2-beta"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: release-name-connector-backend
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: 80
+---
+# Source: grambell/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: release-name-connector-backend
+  labels:
+    helm.sh/chart: grambell-0.1.2-beta
+    app.kubernetes.io/name: connector-backend
+    logging: enabled
+    app.kubernetes.io/version: "0.1.2-beta"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig":
+      { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:910398866891:certificate/8d2b6245-3288-4ede-9785-bab97ec5085a
+    alb.ingress.kubernetes.io/group.name: connector
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    kubernetes.io/ingress.class: alb
+spec:
+  rules:
+    - host: "qa.backend.connector.grambell.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: connector-backend
+                port:
+                  number: 80
+---
+# Source: grambell/templates/service-monitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: connector-backend-service-monitor
+  labels:
+    app: connector-backend
+spec:
+  selector:
+    matchLabels:
+      app: connector-backend
+  endpoints:
+  - port: web
+    path: /api/metrics
+---
+# Source: grambell/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "release-name-connector-backend-test-connection"
+  labels:
+    helm.sh/chart: grambell-0.1.2-beta
+    app.kubernetes.io/name: connector-backend
+    logging: enabled
+    app.kubernetes.io/version: "0.1.2-beta"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['release-name-connector-backend:80']
+  restartPolicy: Never

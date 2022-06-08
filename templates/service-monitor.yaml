@@ -11,7 +11,7 @@ spec:
   selector:
     {{- with .Values.serviceMonitor.spec.selector.matchLabels }}
     matchLabels:
-      {{- toYaml . | nindent 4 }}
+      {{- toYaml . | nindent 6 }}
     {{- end }}
   endpoints:
   {{- range .Values.serviceMonitor.spec.endpoints }}

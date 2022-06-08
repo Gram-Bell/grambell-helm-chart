@@ -1,6 +1,5 @@
 # fullnameOverride: connector-backend
 nameOverride: connector-backend
-namespace: qa
 replicaCount: 2
 
 configMap:
@@ -19,12 +18,12 @@ service:
   type: NodePort
   port: 80
   targetPort: 3010
+  name: web
   selector:
     app.kubernetes.io/name: connector-backend
 
 deployment:
   metadata:
-    namespace: qa
     name: connector-backend
   spec:
     selector:
@@ -73,12 +72,12 @@ ingress:
               name: connector-backend
               port:
                 number: 80
-                
+
 serviceMonitor:
   enabled: true
-  name: service-monitor
+  name: connector-backend-service-monitor
   labels:
-    team: backend
+    app: connector-backend
   spec:
     selector:
       matchLabels:
