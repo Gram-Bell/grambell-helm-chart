@@ -67,3 +67,16 @@ ingress:
               name: 
               port:
                 number: 80
+
+serviceMonitor:
+  enabled: true
+  name: service-monitor
+  labels:
+    team: backend
+  spec:
+    selector:
+      matchLabels:
+        app: connector-backend
+    endpoints:
+    - port: web
+

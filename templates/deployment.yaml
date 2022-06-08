@@ -28,21 +28,8 @@ spec:
             - name: http
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
-          # volumeMounts:
-          # - name: index
-          #   mountPath: '/usr/share/nginx/html'
-          # - name: test
-          #   mountPath: '/tmp'
+          {{- if .Values.configMap.aviliable }}
           volumeMounts:
-            {{- if .Values.configMap.aviliable }}
               {{- range $name, $value := .Values.configMap }}
                 {{- if eq $value.as "volume" }}
                 - name: {{ $name }}-volume
@@ -59,25 +46,6 @@ spec:
             mountPath: {{ quote $value.mountPath }}
             configMap:
               name: {{ $name }}
-              # items:
-              # {{- range $key := .Values.configMap.data}}
-              # - key: {{ $key }} 
-              #   path: {{ $key }}
-              # {{- end}}
           {{- end }}
         {{- end }}
       {{- end}}
-      # volumes:
-      #   - name: index
-      #     configMap: 
-      #       name: {{ .Values.configMap.name }}
-      #       items: 
-      #       - key: "index.html"
-      #         path: "index.html"
-
-      #   - name: test
-      #     configMap: 
-      #       name: {{ .Values.configMap.name }}
-      #       items: 
-      #       - key: "test.html"
-      #         path: "test.html"
