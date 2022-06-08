@@ -1,6 +1,6 @@
 {{- if .Values.serviceMonitor.enabled -}} 
 apiVersion: monitoring.coreos.com/v1
-kindService: Monitor
+kind: ServiceMonitor
 metadata:
   name: {{ .Values.serviceMonitor.name }}
   {{- with .Values.serviceMonitor.labels }}
