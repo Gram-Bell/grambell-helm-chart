@@ -1,37 +1,40 @@
 # fullnameOverride: connector-backend
-nameOverride: 
-namespace: 
-replicaCount: 
+nameOverride: connector-backend
+namespace: qa
+replicaCount: 2
+
+configMap:
+  aviliable: false
 
 image:
-  repository: 
-  pullPolicy: 
-  tag:  # Rename from the pipeline
+  repository: connector-backend-repository
+  pullPolicy: IfNotPresent
+  tag: latest-tag
   ports:
-    containerPort:
+    containerPort: 3010
 
 service:
   metadata:
-    name:
+    name: connector-backend
   type: NodePort
   port: 80
-  targetPort: 80
+  targetPort: 3010
   selector:
-    app.kubernetes.io/name:
+    app.kubernetes.io/name: connector-backend
 
 deployment:
   metadata:
-    namespace:
-    name:
+    namespace: qa
+    name: connector-backend
   spec:
     selector:
       matchLabels:
-        app.kubernetes.io/name: 
+        app.kubernetes.io/name: connector-backend
     template:
       metadata:
         labels:
-          logging: enabled # For ELK Logging
-          app.kubernetes.io/name: 
+          logging: enabled
+          app.kubernetes.io/name: connector-backend
 
 resources:
   limits:
@@ -54,20 +57,23 @@ ingress:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/group.name: 
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/group.name: connector
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:910398866891:certificate/8d2b6245-3288-4ede-9785-bab97ec5085a
+    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+
     
   hosts:
-    - host: 
+    - host: qa.backend.connector.grambell.com
       paths:
         - pathType: Prefix
           path: "/"
-          backend:
+          worker:
             service:
-              name: 
+              name: connector-backend
               port:
                 number: 80
-
+                
 serviceMonitor:
   enabled: true
   name: service-monitor
@@ -79,4 +85,4 @@ serviceMonitor:
         app: connector-backend
     endpoints:
     - port: web
-
+      path: /api/metrics

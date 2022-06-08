@@ -16,5 +16,6 @@ spec:
   endpoints:
   {{- range .Values.serviceMonitor.spec.endpoints }}
   - port: {{ .port }}
+    path: {{ .path }}
   {{- end }}
 {{- end }}
